@@ -2,10 +2,16 @@ extern crate serialize;
 
 use std::str;
 
+// Convert ascii string to hex string
+fn hexlify(str1:String) -> String {
+  use serialize::hex::{ToHex};
+
+  return str1.as_slice().as_bytes().to_hex();
+}
+
+// Convert hex string to ascii string
 fn unhexlify(hex_string:&str) -> String {
-  use serialize::base64::{ToBase64, MIME};
   use serialize::hex::{FromHex};
-  let config = MIME;
 
   let byteVec:Vec<u8> = hex_string.from_hex().unwrap();
   let asciiStr = str::from_utf8(byteVec.as_slice());
@@ -14,28 +20,29 @@ fn unhexlify(hex_string:&str) -> String {
 }
 
 fn fixed_xor(str1:&str, str2:&str) -> String {
-  // Conver the two strings to bytes and zip together.
+  // Unhexlify strings
   let unhex_str1 = unhexlify(str1);
   let unhex_str2 = unhexlify(str2);
 
+  // Convert the two strings to bytes and zip together.
   let zipped:Vec<(&u8, &u8)> = unhex_str1.as_bytes().iter().zip(
     unhex_str2.as_bytes().iter()
   ).collect();
-  println!("{}", zipped);
 
   // Iterate over byte tuples and xor values
-  let mut xored:Vec<int> = Vec::new();
+  let mut xored:Vec<u8> = Vec::new();
   for tup in zipped.iter() {
-    let x1 = *tup.val0() as int;
-    let x2 = *tup.val1() as int;
+    let x1 = *tup.val0() as u8;
+    let x2 = *tup.val1() as u8;
     xored.push(x1 ^ x2);
   }
-  println!("{}", xored);
 
   // Convert to chars and join into string
+  let asciiStr:String = xored.iter().map(|x| *x as char).collect();
+  println!("{}", asciiStr);
 
-  //return str1.as_bytes() ^ str2.as_bytes();
-  return String::new();
+  // Convert xored answer back into hex string
+  return hexlify(asciiStr);
 }
 
 fn main() {
@@ -46,6 +53,6 @@ fn main() {
   let answer = "746865206b696420646f6e277420706c6179";
   let myAnswer = fixed_xor(str1, str2);
 
-  //assert!(answer == myAnswer);
   println!("{}", myAnswer);
+  assert!(answer == myAnswer.as_slice());
 }
