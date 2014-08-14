@@ -5,6 +5,7 @@ use std::str;
 fn hex2b64(hexString:&str) -> String {
   use serialize::base64::{ToBase64, MIME};
   use serialize::hex::{FromHex};
+  // MIME is a provided base64 configuration.
   let config = MIME;
 
   let byteVec:Vec<u8> = hexString.from_hex().unwrap();
