@@ -32,9 +32,10 @@ fn fixed_xor(str1:&str, str2:&str) -> String {
   // Iterate over byte tuples and xor values
   let mut xored:Vec<u8> = Vec::new();
   for tup in zipped.iter() {
-    let x1 = *tup.val0() as u8;
-    let x2 = *tup.val1() as u8;
-    xored.push(x1 ^ x2);
+    // Have to use * to get at pointer values.
+    // See http://paulkoerbitz.de/posts/Understanding-Pointers-Ownership-and-Lifetimes-in-Rust.html
+    // and http://words.steveklabnik.com/pointers-in-rust-a-guide
+    xored.push(*tup.val0() ^ *tup.val1());
   }
 
   // Convert to chars and join into string
