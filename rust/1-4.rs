@@ -35,7 +35,7 @@ fn single_xor(str1:&str, char1:u8) -> String {
 // http://en.wikipedia.org/wiki/Bigram#Bigram_Frequency_in_the_English_language
 fn score_string(str1:String) -> int {
     let bigrams = ["th", "he", "in", "er", "an", "re", "nd", "at", "on", "nt",
-                                 "ha", "es", "st", "en", "ed", "to", "it", "ou", "ea", "hi"];
+                   "ha", "es", "st", "en", "ed", "to", "it", "ou", "ea", "hi"];
     let mut score:int = 0;
     for bigram in bigrams.iter() {
         if str1.as_slice().contains(*bigram) {
