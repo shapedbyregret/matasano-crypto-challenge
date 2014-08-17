@@ -1,5 +1,6 @@
 extern crate serialize;
 
+use std::collections::{BitvSet, Bitv, bitv};
 use std::io::BufferedReader;
 use std::io::File;
 use std::str;
@@ -25,9 +26,17 @@ fn repeating_xor(str1:&str, key:&str) -> String {
     return hexlify(asciiStr);
 }
 
-// Hamming distance is the number of differing bits.
+// Hamming distance is the number of differing *bits*.
 fn edit_distance(str1:&str, str2:&str) -> int {
-    return 0;
+    let mut diff:int = 0;
+    let str1bits:Bitv = bitv::from_bytes(str1.as_bytes());
+    let str2bits:Bitv = bitv::from_bytes(str2.as_bytes());
+    for n in range(0, str1bits.len()) {
+        if str1bits.get(n) != str2bits.get(n) {
+            diff = diff + 1;
+        }
+    }
+    return diff;
 }
 
 fn main() {
@@ -35,6 +44,7 @@ fn main() {
 
     // Test edit distance
     let test_edit = edit_distance("this is a test", "wokka wokka!!!");
+    println!("Differing Bits: {}", test_edit);
     assert_eq!(37, test_edit);
 
     let path = Path::new("6.txt");
