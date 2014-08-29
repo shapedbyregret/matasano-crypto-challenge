@@ -1,13 +1,12 @@
 extern crate serialize;
 
-use std::collections::{BitvSet, Bitv, bitv, HashMap, Map};
-use std::io::BufferedReader;
+use std::collections::{Bitv, bitv, HashMap, Map};
 use std::io::File;
 use std::iter::AdditiveIterator;
 use std::num;
-use std::str;
 
 // Convert ascii string to hex string
+/*
 fn hexlify(ascii_str:String) -> String {
     use serialize::hex::{ToHex};
 
@@ -22,6 +21,7 @@ fn unhexlify(hex_str:&str) -> String {
     //println!("{}", asciiStr);
     return String::from_str(ascii_str.unwrap_or(""));
 }
+*/
 
 fn unb64(b64_str:&str) -> String {
     use serialize::base64::{FromBase64};
@@ -40,6 +40,7 @@ fn single_xor(str1:&str, char1:u8) -> String {
 }
 
 // Bigram scoring
+/*
 fn score_string(str1:String) -> int {
     let bigrams = ["th", "he", "in", "er", "an", "re", "nd", "at", "on", "nt",
                    "ha", "es", "st", "en", "ed", "to", "it", "ou", "ea", "hi"];
@@ -51,48 +52,37 @@ fn score_string(str1:String) -> int {
     }
     return score;
 }
+*/
 
 // Letter frequency score
 fn score_string_2(str1:String) -> f32 {
     //let ETAOIN = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
     let mut score;
     let mut pre_freqs:HashMap<String, f32> = HashMap::new();
-    pre_freqs.insert("E".to_string(), 12.02);
-    pre_freqs.insert("T".to_string(), 9.10);
-    pre_freqs.insert("A".to_string(), 8.12);
-    pre_freqs.insert("O".to_string(), 7.68);
-    pre_freqs.insert("I".to_string(), 7.31);
-    pre_freqs.insert("N".to_string(), 6.95);
-    pre_freqs.insert("S".to_string(), 6.28);
-    pre_freqs.insert("R".to_string(), 6.02);
-    pre_freqs.insert("H".to_string(), 5.92);
-    pre_freqs.insert("D".to_string(), 4.32);
-    pre_freqs.insert("L".to_string(), 3.98);
-    pre_freqs.insert("U".to_string(), 2.88);
-    pre_freqs.insert("C".to_string(), 2.71);
-    pre_freqs.insert("M".to_string(), 2.61);
-    pre_freqs.insert("F".to_string(), 2.3);
+    pre_freqs.insert("e".to_string(), 12.02);
+    pre_freqs.insert("t".to_string(), 9.10);
+    pre_freqs.insert("a".to_string(), 8.12);
+    pre_freqs.insert("o".to_string(), 7.68);
+    pre_freqs.insert("i".to_string(), 7.31);
+    pre_freqs.insert("n".to_string(), 6.95);
+    pre_freqs.insert("s".to_string(), 6.28);
+    pre_freqs.insert("r".to_string(), 6.02);
+    pre_freqs.insert("h".to_string(), 5.92);
+    pre_freqs.insert("d".to_string(), 4.32);
+    pre_freqs.insert("l".to_string(), 3.98);
+    pre_freqs.insert("u".to_string(), 2.88);
+    pre_freqs.insert("c".to_string(), 2.71);
+    pre_freqs.insert("m".to_string(), 2.61);
+    pre_freqs.insert("f".to_string(), 2.3);
 
-    let mut freqs = HashMap::new();
-    freqs.insert("E".to_string(), 0.0);
-    freqs.insert("T".to_string(), 0.0);
-    freqs.insert("A".to_string(), 0.0);
-    freqs.insert("O".to_string(), 0.0);
-    freqs.insert("I".to_string(), 0.0);
-    freqs.insert("N".to_string(), 0.0);
-    freqs.insert("S".to_string(), 0.0);
-    freqs.insert("R".to_string(), 0.0);
-    freqs.insert("H".to_string(), 0.0);
-    freqs.insert("D".to_string(), 0.0);
-    freqs.insert("L".to_string(), 0.0);
-    freqs.insert("U".to_string(), 0.0);
-    freqs.insert("C".to_string(), 0.0);
-    freqs.insert("M".to_string(), 0.0);
-    freqs.insert("F".to_string(), 0.0);
+    let mut freqs:HashMap<String, f32> = pre_freqs.clone();
+    for (key, val) in freqs.mut_iter() {
+        *val = 0.0;
+    }
 
     // Get frequency of each letter
     for c in str1.as_slice().chars() {
-        let c_str = c.to_uppercase().to_string();
+        let c_str = c.to_string();
         if freqs.contains_key(&c_str) {
             *freqs.get_mut(&c_str) += 1.0;
         }
@@ -219,8 +209,8 @@ fn main() {
         }
         
     }
-    println!("{}", key.concat());
+    println!("Guessed Key: {}", key.concat());
 
     let decoded = repeating_xor(file.as_slice(), key.concat().as_slice());
-    //println!("{}", decoded);
+    println!("{}", decoded);
 }
