@@ -3,6 +3,8 @@ extern crate serialize;
 use std::collections::{BitvSet, Bitv, bitv, HashMap, Map};
 use std::io::BufferedReader;
 use std::io::File;
+use std::iter::AdditiveIterator;
+use std::num;
 use std::str;
 
 // Convert ascii string to hex string
@@ -37,6 +39,7 @@ fn single_xor(str1:&str, char1:u8) -> String {
     return asciiStr;
 }
 
+// Bigram scoring
 fn score_string(str1:String) -> int {
     let bigrams = ["th", "he", "in", "er", "an", "re", "nd", "at", "on", "nt",
                    "ha", "es", "st", "en", "ed", "to", "it", "ou", "ea", "hi"];
@@ -49,23 +52,75 @@ fn score_string(str1:String) -> int {
     return score;
 }
 
-fn score_string_2(str1:String) -> int {
+// Letter frequency score
+fn score_string_2(str1:String) -> f32 {
     //let ETAOIN = "ETAOINSHRDLCUMWFGYPBVKJXQZ";
-    let mut freqs = HashMap::new();
-    let mut score = 0i;
-    freqs.insert("E".to_string(), 12i);
-    freqs.insert("T".to_string(), 9i);
-    freqs.insert("A".to_string(), 8i);
-    freqs.insert("O".to_string(), 8i);
-    freqs.insert("I".to_string(), 7i);
-    freqs.insert("N".to_string(), 7i);
+    let mut score;
+    let mut pre_freqs:HashMap<String, f32> = HashMap::new();
+    pre_freqs.insert("E".to_string(), 12.02);
+    pre_freqs.insert("T".to_string(), 9.10);
+    pre_freqs.insert("A".to_string(), 8.12);
+    pre_freqs.insert("O".to_string(), 7.68);
+    pre_freqs.insert("I".to_string(), 7.31);
+    pre_freqs.insert("N".to_string(), 6.95);
+    pre_freqs.insert("S".to_string(), 6.28);
+    pre_freqs.insert("R".to_string(), 6.02);
+    pre_freqs.insert("H".to_string(), 5.92);
+    pre_freqs.insert("D".to_string(), 4.32);
+    pre_freqs.insert("L".to_string(), 3.98);
+    pre_freqs.insert("U".to_string(), 2.88);
+    pre_freqs.insert("C".to_string(), 2.71);
+    pre_freqs.insert("M".to_string(), 2.61);
+    pre_freqs.insert("F".to_string(), 2.3);
 
+    let mut freqs = HashMap::new();
+    freqs.insert("E".to_string(), 0.0);
+    freqs.insert("T".to_string(), 0.0);
+    freqs.insert("A".to_string(), 0.0);
+    freqs.insert("O".to_string(), 0.0);
+    freqs.insert("I".to_string(), 0.0);
+    freqs.insert("N".to_string(), 0.0);
+    freqs.insert("S".to_string(), 0.0);
+    freqs.insert("R".to_string(), 0.0);
+    freqs.insert("H".to_string(), 0.0);
+    freqs.insert("D".to_string(), 0.0);
+    freqs.insert("L".to_string(), 0.0);
+    freqs.insert("U".to_string(), 0.0);
+    freqs.insert("C".to_string(), 0.0);
+    freqs.insert("M".to_string(), 0.0);
+    freqs.insert("F".to_string(), 0.0);
+
+    // Get frequency of each letter
     for c in str1.as_slice().chars() {
         let c_str = c.to_uppercase().to_string();
         if freqs.contains_key(&c_str) {
-            score += *freqs.get_mut(&c_str);
+            *freqs.get_mut(&c_str) += 1.0;
         }
     }
+
+    // Get frequency as percentage
+    let str1_len = str1.len() as f32;
+    for (key, val) in freqs.mut_iter() {
+        *val /= str1_len;
+        *val *= 100.0;
+    }
+
+    // Compare frequencies
+    let mut cmps:Vec<f32> = Vec::new();
+    for (key, val) in pre_freqs.iter() {
+        if freqs.contains_key(key) {
+            cmps.push(num::abs( freqs[*key] - *val ));
+        }
+    }
+    
+    // Get score
+    if cmps.len() > 0 {
+        score = cmps.iter().map(|v| *v).sum();
+    } else {
+        score = 9999.0;
+    }
+    
+    //println!("{}", score);
 
     return score;
 }
@@ -147,7 +202,7 @@ fn main() {
     }
     //println!("Blocks: {}", blocks);
     
-    let mut scores = Vec::from_elem(key_len, 0i);
+    let mut scores = Vec::from_elem(key_len, 9999.0);
     let mut key = Vec::from_elem(key_len as uint, "".to_string());
     let mut decoded_blocks = Vec::from_elem(key_len as uint, "".to_string());
     for n in range(32 as u8, 127) {
@@ -155,11 +210,14 @@ fn main() {
         for i in range(0, key_len) {
             *decoded_blocks.get_mut(i) = single_xor(blocks[i].as_slice(), n);
             let score = score_string_2(decoded_blocks[i].clone());
-            if score > scores[i] {
+            //println!("{}", score);
+            if score < scores[i] {
                 *scores.get_mut(i) = score;
                 *key.get_mut(i) = (n as char).to_string();
             }
+            
         }
+        
     }
     println!("{}", key.concat());
 
