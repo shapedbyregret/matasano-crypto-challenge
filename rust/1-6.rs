@@ -5,24 +5,8 @@ use std::io::File;
 use std::iter::AdditiveIterator;
 use std::num;
 
-// Convert ascii string to hex string
-/*
-fn hexlify(ascii_str:String) -> String {
-    use serialize::hex::{ToHex};
 
-    return ascii_str.as_slice().as_bytes().to_hex();
-}
-
-fn unhexlify(hex_str:&str) -> String {
-    use serialize::hex::{FromHex};
-
-    let byteVec:Vec<u8> = hex_str.from_hex().unwrap();
-    let ascii_str = str::from_utf8(byteVec.as_slice());
-    //println!("{}", asciiStr);
-    return String::from_str(ascii_str.unwrap_or(""));
-}
-*/
-
+// Base64 decoding
 fn unb64(b64_str:&str) -> String {
     use serialize::base64::{FromBase64};
     
@@ -30,6 +14,7 @@ fn unb64(b64_str:&str) -> String {
     return ascii_str;
 }
 
+// Solve single key xored string
 fn single_xor(str1:&str, char1:u8) -> String {
     //let unhex_str1 = unhexlify(str1);
     let xored:Vec<u8> = str1.as_bytes().iter().map(|c| c ^ char1).collect();
@@ -38,21 +23,6 @@ fn single_xor(str1:&str, char1:u8) -> String {
     //return hexlify(asciiStr);
     return asciiStr;
 }
-
-// Bigram scoring
-/*
-fn score_string(str1:String) -> int {
-    let bigrams = ["th", "he", "in", "er", "an", "re", "nd", "at", "on", "nt",
-                   "ha", "es", "st", "en", "ed", "to", "it", "ou", "ea", "hi"];
-    let mut score:int = 0;
-    for bigram in bigrams.iter() {
-        if str1.as_slice().contains(*bigram) {
-            score += 1;
-        }
-    }
-    return score;
-}
-*/
 
 // Letter frequency score
 fn score_string_2(str1:String) -> f32 {
@@ -115,6 +85,7 @@ fn score_string_2(str1:String) -> f32 {
     return score;
 }
 
+// Solve repeating key xored string
 fn repeating_xor(str1:&str, key:&str) -> String {
     let mut xored:Vec<u8> = Vec::new();
     let mut cnt:uint = 0;
@@ -142,21 +113,8 @@ fn edit_distance(str1:&[u8], str2:&[u8]) -> int {
     return diff;
 }
 
-fn main() {
-    // Break repeating key XOR. Input file is base64.
-
-    // Test edit distance
-    let test_edit = edit_distance("this is a test".as_bytes(),
-                                  "wokka wokka!!!".as_bytes());
-    println!("Differing Bits: {}", test_edit);
-    assert_eq!(37, test_edit);
-
-    // Load file into memory
-    let mut file = File::open(&Path::new("6.txt")).read_to_string().unwrap();
-    file = unb64(file.as_slice());
-    //println!("{}", file);
-
-    // Guess keysize
+// Guess key length
+fn guess_key_length(str1:&str) -> uint {
     let mut key_len:uint = 2 as uint;
     let mut min_dist:f32 = 9999.0;
     for n in range(2, 40) {
@@ -164,8 +122,8 @@ fn main() {
         let mut norm = 0f32;
         // Use average of 20 normalized edit distances.
         loop {
-            let sliceA = file.as_bytes().slice(n*i, n*(i+1));
-            let sliceB = file.as_bytes().slice(n*(i+1), n*(i+2));
+            let sliceA = str1.as_bytes().slice(n*i, n*(i+1));
+            let sliceB = str1.as_bytes().slice(n*(i+1), n*(i+2));
             norm += edit_distance(sliceA, sliceB) as f32 / n as f32;
             i += 2;
             if i > 40 {
@@ -178,6 +136,24 @@ fn main() {
             key_len = n;
         }
     }
+    return key_len;
+}
+
+fn main() {
+    // Break repeating key XOR. Input file is base64.
+
+    // Test edit distance
+    let test_edit = edit_distance("this is a test".as_bytes(),
+                                  "wokka wokka!!!".as_bytes());
+    println!("Differing Bits: {}", test_edit);
+    assert_eq!(37, test_edit);
+
+    // Load file into memory
+    let mut file = File::open(&Path::new("6.txt")).read_to_string().unwrap();
+    file = unb64(file.as_slice());
+
+    // Guess keysize
+    let key_len = guess_key_length(file.as_slice());
     println!("Guessed Key Length: {}", key_len);
 
     // Transpose file into n(key length) number of blocks
@@ -190,8 +166,8 @@ fn main() {
             cnt = 0;
         }
     }
-    //println!("Blocks: {}", blocks);
     
+    // Xor each block and score to guess at key
     let mut scores = Vec::from_elem(key_len, 9999.0);
     let mut key = Vec::from_elem(key_len as uint, "".to_string());
     let mut decoded_blocks = Vec::from_elem(key_len as uint, "".to_string());
@@ -200,7 +176,8 @@ fn main() {
         for i in range(0, key_len) {
             *decoded_blocks.get_mut(i) = single_xor(blocks[i].as_slice(), n);
             let score = score_string_2(decoded_blocks[i].clone());
-            //println!("{}", score);
+            // Lower score is better.
+            // Save lowest scores and corresponding char
             if score < scores[i] {
                 *scores.get_mut(i) = score;
                 *key.get_mut(i) = (n as char).to_string();
@@ -211,6 +188,7 @@ fn main() {
     }
     println!("Guessed Key: {}", key.concat());
 
+    // Use repeating key xor to see if guessed key outputs sensible text.
     let decoded = repeating_xor(file.as_slice(), key.concat().as_slice());
     println!("{}", decoded);
 }
